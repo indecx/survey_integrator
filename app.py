@@ -92,7 +92,9 @@ if uploaded_file is not None:
             "additionalQuestions.EMOTION",
             "additionalQuestions.MULTIPLE", 
             "additionalQuestions.INPUT", 
-            "indicators.column"
+            "indicators.column",
+            "categories.category",
+            "categories.subcategory"
         ]
         
         # Mapeamento de colunas
@@ -131,6 +133,7 @@ if uploaded_file is not None:
             basic_fields = {}
             additional_questions = {}
             indicators = {}
+            categories_data = {"category": [], "subcategory": []}
             
             for excel_col, json_field in mappings.items():
                 if json_field in ["Name", "email", "phone", "review", "createdAt", "feedback"]:
@@ -142,6 +145,10 @@ if uploaded_file is not None:
                     additional_questions[question_type].append(excel_col)
                 elif json_field.startswith("indicators."):
                     indicators[excel_col] = True
+                elif json_field.startswith("categories."):
+                    field_type = json_field.split('.')[1]
+                    if pd.notna(row_data[excel_col]):
+                        categories_data[field_type].append(excel_col)
             
             # Construir o payload JSON
             payload = {}
@@ -151,10 +158,8 @@ if uploaded_file is not None:
                 if pd.notna(row_data[excel_col]):
                     if json_field == "review":
                         try:
-                            # Converter para inteiro quando o valor for numérico
                             payload[json_field] = int(float(row_data[excel_col]))
                         except (ValueError, TypeError):
-                            # Se não for possível converter para número, manter como texto
                             if isinstance(row_data[excel_col], str):
                                 payload[json_field] = row_data[excel_col]
                             else:
@@ -183,7 +188,6 @@ if uploaded_file is not None:
                     if pd.notna(row_data[excel_col]):
                         if question_type in ["REVIEWS", "LIKERT", "CSAT"]:
                             try:
-                                # Converter para inteiro quando o valor for numérico
                                 review_value = int(float(row_data[excel_col]))
                                 questions_list.append({
                                     "type": question_type,
@@ -193,7 +197,6 @@ if uploaded_file is not None:
                             except (ValueError, TypeError):
                                 pass
                         elif question_type == "LIKE/DISLIKE":
-                            # Converter para booleano para LIKE/DISLIKE (tratando vários formatos possíveis)
                             value = str(row_data[excel_col]).lower()
                             is_like = value in ["1", "true", "yes", "sim", "like", "gosto", "👍"]
                             questions_list.append({
@@ -202,7 +205,6 @@ if uploaded_file is not None:
                                 "review": is_like
                             })
                         elif question_type == "EMOTION":
-                            # Para emoções, apenas enviar o valor como string
                             questions_list.append({
                                 "type": "EMOTION",
                                 "text": excel_col,
@@ -215,9 +217,7 @@ if uploaded_file is not None:
                                 "review": str(row_data[excel_col])
                             })
                         elif question_type == "MULTIPLE":
-                            # Tratar valores separados por vírgula
                             value = str(row_data[excel_col])
-                            # Dividir por vírgula e remover espaços em branco no início e fim de cada item
                             options = [item.strip() for item in value.split(',') if item.strip()]
                             
                             questions_list.append({
@@ -240,6 +240,24 @@ if uploaded_file is not None:
             
             if indicators_list:
                 payload["indicators"] = indicators_list
+
+            # Adicionar categorias
+            categories_list = []
+            for cat_col in categories_data["category"]:
+                if pd.notna(row_data[cat_col]):
+                    category_item = {
+                        "category": str(row_data[cat_col]),
+                        "subcategory": ""
+                    }
+                    # Procurar subcategoria correspondente
+                    for subcat_col in categories_data["subcategory"]:
+                        if pd.notna(row_data[subcat_col]):
+                            category_item["subcategory"] = str(row_data[subcat_col])
+                            break
+                    categories_list.append(category_item)
+            
+            if categories_list:
+                payload["categories"] = categories_list
                 
             return payload
         
