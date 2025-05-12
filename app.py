@@ -82,7 +82,8 @@ if uploaded_file is not None:
             "Name", 
             "email", 
             "phone", 
-            "review", 
+            "review",
+            "channel",
             "createdAt", 
             "feedback", 
             "additionalQuestions.REVIEWS", 
@@ -136,7 +137,7 @@ if uploaded_file is not None:
             categories_data = {"category": [], "subcategory": []}
             
             for excel_col, json_field in mappings.items():
-                if json_field in ["Name", "email", "phone", "review", "createdAt", "feedback"]:
+                if json_field in ["Name", "email", "phone", "review", "channel", "createdAt", "feedback"]:
                     basic_fields[json_field.lower()] = excel_col
                 elif json_field.startswith("additionalQuestions."):
                     question_type = json_field.split('.')[1]
@@ -172,6 +173,8 @@ if uploaded_file is not None:
                                 payload["createdAt"] = str(row_data[excel_col])
                         except:
                             payload["createdAt"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    elif json_field == "channel":
+                        payload[json_field] = str(row_data[excel_col]).strip()
                     else:
                         payload[json_field] = str(row_data[excel_col])
             
