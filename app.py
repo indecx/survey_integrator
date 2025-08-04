@@ -101,7 +101,9 @@ if uploaded_file is not None:
             "additionalQuestions.REVIEWS", "additionalQuestions.LIKE/DISLIKE",
             "additionalQuestions.LIKERT", "additionalQuestions.CSAT",
             "additionalQuestions.EMOTION", "additionalQuestions.MULTIPLE", 
-            "additionalQuestions.INPUT", "indicators.column",
+            "additionalQuestions.INPUT", "additionalQuestions.NPS",
+            "additionalQuestions.CES", "additionalQuestions.CES17",
+            "additionalQuestions.CSAT-1-5", "indicators.column",
             "categories.category", "categories.subcategory"
         ]
         
